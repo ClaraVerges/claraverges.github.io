@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8">
+    <title>T->P leakage analysis for BK18 — C. Vergès</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <!-- Load up MathJax for math notation -->
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+            TeX: { equationNumbers: { autoNumber: "AMS" } }
+        });
+    </script>
+	<script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+              tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+        });
+    </script>
+    <script type="text/javascript"
+        src="../mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+</head>
+
+<body>
+<!-- Add my custom pager script -->
+<script type="text/javascript" src="scripts/pager.js"></script>
+<link rel="stylesheet" type="text/css" href="scripts/pager.css">
+
+<header>
+    <h1>T->P leakage analysis for BK18</h1>
+
+    <time datetime="2021-01-05" class="published updated">
+        2021 02 22
+    </time> —
+    Clara Vergès
+</header>
+
+<hr>
+
+<p> This posting present the on-going work to assess the impact on parameter recovery from undeprojected T->P leakage.
+It builds on and follows the analysis that was done in <a href=https://arxiv.org/pdf/1904.01640.pdf>BK XI</a>, in particular section 6.
+<br>
+Previous references include a wide range of posting by Caterina and Colin, the most relevant are:
+<ul>
+  <li> <a href=../../bkcmb/analysis_logbook/analysis/20190114_leakage/> Addressing TP leakage: ML searches (CU) </a></li>
+  <li> <a href=../../bkcmb/analysis_logbook/analysis/20190226_leakage/> Addressing TP leakage: ML searches in a simplified setting (CU, CAB) </a></li>
+  <li> <a href=../../bkcmb/analysis_logbook/analysis/20190205_leakage/> Addressing TP leakage: comparison between ML searches and CosmoMC (CU) </a></li>
+  <li> <a href=../../bkcmb/analysis_logbook/analysis/20190225_leakage/> Addressing TP leakage: details in the comparison between ML searches and CosmoMC (CU) </a></li>
+  <li> <a href=../../bkcmb/analysis_logbook/analysis/20190325_leakage/> TP leakage on real data (CU) </a></li>
+  <li> <a href=../../bkcmb/analysis_logbook/analysis/20180827_leakage/> Addressing TP leakage: beam maps cross-spectra templates (part 4) (CU) </a> and previous postings linked therein</li>
+</ul>
+</p>
+
+<hr>
+
+<h3>Table of Contents</h3>
+<ol type="I">
+<li><a href="#bk15">Framework and previous results</a></li>
+  <ol type="i">
+  <li><a href="#cases">Scenarios considered for BK15</a>
+  <li><a href="#results15"> Simulations and results</a>
+  </ol>
+<li><a href="#bk18">BK18</a></li>
+  <ol type="i">
+  <li><a href="#beams">Beam sims and templates</a>
+  <li><a href="#results">Results</a>
+  <li><a href="#summary">Summary</a>
+  </ol>
+</ol>
+
+<section><h2 id=bk15>Motivation and previous results</h2>
+<p>We know that some beam mismatch is not entirely removed by deprojecting the leading order
+modes (differential gain, differential pointing, differential beam width, and differential ellipticity).
+This results in power in undeprojected residuals - the difference beam pattern that remains after deprojection -
+and consequently to T->P leakage that is not filtered out.
+Beam sims are thus of central importance to quantify this leakage.
+</p>
+<h3 id=cases> Scenarios considered for BK15</h3>
+<p>From the beam simulation, two types of templates can be produced: auto spectra,
+i.e. beam x beam (bmxbm hereafter), and cross spectra with real data,
+i.e. beam x real (bmxre hereafter). In the analysis of the BK15 data set,
+three main scenario were considered to assess the impact of T->P leakage,
+with some variations for some of them:
+<ol>
+<li> Upper limit scenarios: for scenario (1) and (2), leakage templates are added
+to both auto and cross-frequency spectra, with the amplitude on cross-frequency
+spectra being the geometric mean of the respective auto-spectra amplitudes. Moreover,
+bmxbm templates are noise debiased before they are added, using beam sim noise auto spectra
+(beam sim noise x bm sim noise)</li>
+  <ul>
+    <li> (1) inject the full bmxbm template in simulations,
+      but do not fit it in the likelihood function; </li>
+    <li> (2) inject the bmxbm template with varying Gaussian (0, 0.5) amplitude
+      (truncated to keep only positive values) in simulations,
+       but do not fit it in the likelihood function. </li>
+  </ul>
+<li> CMB data driven scenario: for scenario (3), leakage templates are added only on auto-(frequency)spectra, as
+  cross-(frequency)spectra are mostly noise with no evidence for leakage detection (large
+  error bars), and bmxre templates are not noise debiased</li>
+  <ul>
+    <li> (3) inject the bmxre template, and add contribution from bmxtype-8 simulations
+      with an amplitude randomly sampled from
+      a Gaussian ($\mu$, $\sigma$) on the auto-spectra,
+      where $\mu$ and $\sigma$ are the mean and std in each bin,
+      but do not fit it in the likelihood function. </li>
+  </ul>
+<li> Recovery scenarios: scenario (4) corresponds to scenario (2) and scenario (5)
+to scenario (3) in terms of how leakage templates are added, but this time we
+try to fit for the leakage contribution in the likelihood.</li>
+<ul>
+  <li> (4) inject the bmxbm template with varying Gaussian (0, 0.5) amplitude
+    (truncated to keep only positive values) in simulations,
+    and fit it in the likelihood function; </li>
+  <li> (5) inject the bmxre template with Gaussian ($\mu$, $\sigma$) amplitude per each bin in simulations,
+    but fit it with the bmxbm template in the likelihood function; </li>
+  <li> (6) no leakage injection in simulations, but fit for a leakage contribution in the likelihood function. </li>
+</ul>
+</ol>
+
+In BK XI, the <b>"CMB data driven scenario" (scenario 3)</b> was taken
+as the best estimate of T->P leakage and quoted as baseline result.
+<p>
+<h3 id=results15> Simulation and results</h3>
+<p>For BK15, two types of analysis were performed, both on simulation and real data:
+ML searches (499 realisations) and CosmoMC (25 sims). The figure of merit for
+this analysis in the shift in the recovered value of $r$.<br>
+
+Results are summarised in Figure 1 hereafter (Figure 9 in BK XI).
+</p>
+<figure>
+  <img src="figs/fig9.png"/>
+  <figcaption>
+        Shifts in recovered r for various T->P leakage scenario
+    </figcaption>
+</figure>
+
+<h4> ML searches </h4>
+
+<p> ML searches for this work are performed with the usual MLsearch routine, with a few modifications.
+For scenario (1-2-3), input data is modified to add leakage, but no extra parameters are estimated in the likelihood function.
+For scenario (4-5-6), 3 extra parameters are estimated, corresponding to the amplitude of the T->P leakage
+in each of the 3 frequency maps (95, 150 and 220 GHz). Reported numbers correspond to the mean and 1-$\sigma$
+standard deviation of the distribution of the realisation-to-realisation difference
+of recovered $r$ value:
+
+\begin{equation}
+\Delta(r) = r_{baseline} - r_{leakage},
+\end{equation}
+
+where $r_{baseline}$ is the result of the baseline, likelihood maximisation,
+with no leakage injected nor fitted; and $r_{leakage}$ is the recovered value or $r$
+for the various considered scenarios.
+<br><br>
+The first columnn of the following table (from <a href=../../bkcmb/analysis_logbook/analysis/20190325_leakage/> this posting </a>
+by Caterina, Table 1 at the bottom) summarises final results of T->P leakage MLsearches for BK15.
+The second column show results as I was able to reproduce them - observed differences
+can be attributed to a slightly different processing of ML search results
+(Caterina used a custom-made Python routine, I used the standard <tt>get_MLsearch_results.m</tt>)
++ variability in the random number generation for the amplitude of templates. Full histograms
+of $\Delta(r)$ for reproduced results are also shown in the pager below.
+
+<div style="text-align: center;">
+  <table>
+   <tr>
+     <th>Scenario</th>
+     <th>ML searches <br> Final results</th>
+     <th>ML searches <br> Results reproduced</th>
+     <!-- <th>CosmoMC</th> -->
+   </tr>
+   <tr>
+     <td> (1) inject bmxbm (max) <br> no fit </td>
+     <td> 0.0085 $\pm$ 0.0011 </td>
+     <td> 0.0087 $\pm$ 0.0010 </td>
+     <!-- <td> 0.0042 $\pm$ 0.0016 </td> -->
+   </tr>
+   <tr>
+     <td> (2) inject bmxbm (Gaussian)<br> no fit</td>
+     <td> 0.0044 $\pm$ 0.0016 </td>
+     <td> 0.0045 $\pm$ 0.0016 </td>
+     <!-- <td> 0.0020 $\pm$ 0.0012 </td> -->
+   </tr>
+   <tr>
+     <td> (3) inject bmxre <br> no fit</td>
+     <td> 0.0027 $\pm$ 0.0019 </td>
+     <td> 0.0029 $\pm$ 0.0019 </td>
+     <!-- <td> 0.0014 $\pm$ 0.0008 </td> -->
+   </tr>
+   <tr>
+     <td> (4) inject bmxbm (Gaussian) <br> correct fit</td>
+     <td> -0.0004 $\pm$ 0.0021 </td>
+     <td> -0.0005 $\pm$ 0.0027 </td>
+     <!-- <td>  0.0004 $\pm$ 0.0005 </td> -->
+   </tr>
+   <tr>
+     <td> (5) inject bmxre <br> fit bmxbm</td>
+     <td> -0.0017 $\pm$ 0.0035 </td>
+     <td> -0.0019 $\pm$ 0.0039 </td>
+     <!-- <td> -0.0007 $\pm$ 0.0007 </td> -->
+    </tr>
+    <tr>
+      <td> (6) no leakage <br> fit bmxbm</td>
+      <td> -0.0019 $\pm$ 0.0019 </td>
+      <td> -0.0020 $\pm$ 0.0020 </td>
+      <!-- <td> -0.0008 $\pm$ 0.0005  </td> -->
+     </tr>
+  </table>
+</div>
+
+</p>
+<figure>
+<img alt="" id="bk15ml" src="#bk15ml" onerror="this.src='plot_blank.png';" width=70% />
+       <script type="text/javascript">
+          var bk15mlpager = new Pager("bk15ml");
+          bk15mlpager.link("#bk15ml",
+          {'Scenario|scenario': ['1|1','2|2','3|3','4|4','5|5','6|6']},
+          function(params)
+          {return 'figs/test_hist_tpol_'+params.scenario+'_diff.png';});
+          bk15mlpager.setparams({'scenario': '1'});
+          bk15mlpager.gridalign('#bk15ml', 4);
+        </script>
+<figcaption>
+  ML search results for BK15
+</figcaption>
+</figure>
+
+</section>
+
+<section><h2 id=bk18>BK18</h2>
+
+<h3 id=beams> Beam sims and templates</h3>
+
+<p>For BK18, Tyler did the beam simulations and T->P leakage templates. See details in his postings:
+<ul>
+  <li> <a href= ../../bkcmb/analysis_logbook/analysis/20201027_bk18_bmsim_1/> BK18 Beam Sims Update 1 (TSG) </a> </li>
+  <li> <a href= ../../bkcmb/analysis_logbook/analysis/20210127_bk18_bmsim_2/> BK18 Beam Sims Update II: B18 Sim x Real (TSG) </a> </li>
+  <li> <a href= ../../bkcmb/analysis_logbook/analysis/20210218_bk18_bmsim_3/> BK18 Beam Sims Update III: BK18 Sim x Real (TSG) </a> </li>
+</ul>
+
+This pager compares bmxre spectra for BK15 and BK18. Spectras are taken from Figure 3 in
+<a href= ../../bkcmb/analysis_logbook/analysis/20210218_bk18_bmsim_3/> Tyler's posting </a>.
+
+<figure>
+<img alt="" id="autospec" src="#autospec" onerror="this.src='plot_blank.png';" width=70% />
+       <script type="text/javascript">
+          var autospecpager = new Pager("autospec");
+          autospecpager.link("#autospec",
+          {'Data set|data': ['BK18','BK15'],
+          'Experiment|exp': ['B95|b95','K95|k95','150|150','220|220']},
+          function(params)
+          {return 'figs/autospectras/'+params.data+'_'+params.exp+'.png';});
+          autospecpager.setparams({'data': 'BK18',
+                                  'exp':'b95'});
+          autospecpager.gridalign('#autospec', 4);
+        </script>
+<figcaption>
+  Comparison of BK15 and BK18 leakage templates. For BK15, B95 and K95 are identical.
+</figcaption>
+</figure>
+
+</p>
+
+<h3 id=results> Results</h3>
+<p> For this analysis, I use the baseline BK18 scenario: 8 parameters in the likelihood,
+<tt>bk18_lf</tt> data set, no prior on beta dust and Gaussian dust.
+
+<br> <br>
+
+The following table quotes results for scenario 1 - 2 - 3 for BK18, compared to the same analysis with BK15 data.
+For the final BK18 result, the current plan is to use the CMB data-driven scenario (scenario 3) as the baseline scenario
+to quote uncertainty on $r$ from T->P leakage. For this reason, I have not run the equivalent of scenarios (4) to (6)
+that require to modify the likelihood to include new parameters, but that could be done
+for consistency.
+<br> <br>
+Numbers reported in the table correspond to the mean and 1-$\sigma$ standard deviation of
+the realisation-to-realisation difference distribution.
+Full histograms of $\Delta(r)$ are also shown in the pager below.
+</p>
+
+<div style="text-align: center;">
+  <table>
+   <tr>
+     <th>Scenario</th>
+     <th>ML searches - BK18</th>
+     <th>ML searches - BK15</th>
+   </tr>
+   <tr>
+     <td>Baseline constraint on $r$</td>
+     <td>$r_{0.05}$ < 0.034 <br> $\sigma(r)$ = 0.009</td>
+     <td>$r_{0.05}$ < 0.07 <br> $\sigma(r)$ = 0.020</td>
+   </tr>
+   <tr>
+     <td> (1) inject bmxbm (max) <br> no fit </td>
+     <td> 0.0036 $\pm$ 0.0006 </td>
+     <td> 0.0085 $\pm$ 0.0011 </td>
+   </tr>
+   <tr>
+     <td> (2) inject bmxbm (Gaussian)<br> no fit</td>
+     <td> 0.0014 $\pm$ 0.0008 </td>
+     <td> 0.0044 $\pm$ 0.0016 </td>
+   </tr>
+   <tr>
+     <td> (3) inject bmxre <br> no fit</td>
+     <td> 0.0015 $\pm$ 0.0011 </td>
+     <td> 0.0028 $\pm$ 0.0018  </td>
+   </tr>
+  </table>
+</div>
+
+<figure>
+<img alt="" id="bk18ml" src="#bk18ml" onerror="this.src='plot_blank.png';" width=70% />
+       <script type="text/javascript">
+          var bk18mlpager = new Pager("bk18ml");
+          bk18mlpager.link("#bk18ml",
+          {'Scenario|scenario': ['1|1','2|2','3|3'],
+          'Type of plot|type': ['Baseline|baseline','With TP leakage|shift','Rlz-to-rlz difference with baseline|diff']},
+          function(params)
+          {return 'figs/test_tpleakage'+params.scenario+'_'+params.type+'.png';});
+          bk18mlpager.setparams({'scenario': '1',
+                                  'type':'diff'});
+          bk18mlpager.gridalign('#bk18ml', 4);
+        </script>
+<figcaption>
+  ML search results for BK18
+</figcaption>
+</figure>
+
+<h3 id=summary> Summary</h3>
+
+Following the method developped in BK XI, we evaluate the impact of undeprojected
+T-to-P leakage on $r$ recovery. To do so, we analyse the shift in maximum likelihood
+$r$ estimation for a set of 499 simulations in which we have added a T-to-P leakage
+estimate, compared to the same simulations without leakage. We report the median
+and 1-$sigma$ standard deviation of the realisation-to-realisation difference distribution.
+
+<br> <br>
+
+We report results corresponding to the so-called "CMB data-driven" scenario presented
+in BK XI, for which leakage templates are added only on auto-frequency spectra, as
+cross-frequency spectra show no evidence for leakage detection. More specifically,
+we add a leakage contribution whose mean amplitude is set by the cross spectra of beam map
+simulations with BK18 maps (blue points in Figure 2.1), and each realisation is additionaly
+biased by a random contribution drawn from the standard deviation of cross spectra
+of beam map simulations with 499 CMB + lensing + dust + noise simulations (<i>error
+bars not shown in Figure 2.1 but will be included in the paper</i>).
+
+<br><br>
+
+The recovered bias on $r$ is $\Delta(r) = 1.5 \pm 1.1 \times 10^{-3}$, which is subdominant
+compared to our statistical error. Compared to BK15 results, the statistical uncertainty on $r$
+has been reduced by a factor of ~2, from $\sigma(r) = 2.0 \times 10^{-2}$ to
+$\sigma(r) = 9 \times 10^{-3}$), and so has the recovered bias $r$ from T-to-P leakage, from
+$\Delta(r) = 2.7 \pm 1.9 \times 10^{-3}$ to $\Delta(r) = 1.5 \pm 1.1 \times 10^{-3}$,
+showing that the constraining power of this analysis remains the same.
+
+<br><br>
+
+This analysis highlights the importance of careful calibration campaigns and beam mapping,
+whiich is necessary to ensure both an efficient deprojection of common mode, and
+ensure that undeprojected effects leading to T-to-P leakage in final maps are correctly
+taken into account. While some aspects of beam mapping and deprojection have already
+been improved since BK15 (<i> which ones? </i>), better correction techniques can be
+applied in the future (<i> which ones? </i>). This will ensure that T-to-P leakage
+do not become a limiting effect as we anticipate that $\sigma(r)$ will continue to
+decrease with the deployment of the new BICEP Array receivers.
+
+<hr>
+
+</body>
