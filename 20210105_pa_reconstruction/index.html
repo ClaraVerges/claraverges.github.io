@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Polarisation angle reconstruction I — C. Vergès</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <!-- Load up MathJax for math notation -->
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+            TeX: { equationNumbers: { autoNumber: "AMS" } }
+        });
+    </script>
+	<script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+              tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+        });
+    </script>
+    <script type="text/javascript"
+        src="../mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+</head>
+
+<body>
+<!-- Add my custom pager script -->
+<script type="text/javascript" src="scripts/pager.js"></script>
+<link rel="stylesheet" type="text/css" href="scripts/pager.css">
+
+<header>
+    <h1>Polarisation angle reconstruction I: mirror/source parameters</h1>
+
+    <time datetime="2020-01-05" class="published updated">
+        2020 01 05
+    </time> —
+    Clara Vergès
+</header>
+
+<hr>
+
+<p>This posting summarises analysis steps to derive polarisation angles of detectors from RPS observation.
+In this approach, source (RPS) and mirror parameters are constrained using the full detector raster, by minimising position differences between source-derived and CMB-derived detector positions.<br>
+Previous references include James's <a href="http://bicep.rc.fas.harvard.edu/jcornelison/postings/2020mmdd_rps_review/">posting</a>,
+<a href="https://arxiv.org/pdf/2012.05934.pdf">SPIE proceeding</a> and
+<a href="https://drive.google.com/file/d/1gENnPU4MOMHUUR0Obk87jwCdb37JmVUb/view?usp=sharing">research paper</a>. <br>
+See also <a href="http://bicep.rc.fas.harvard.edu/bkcmb/analysis_logbook/analysis/20190516_rps_pointing_defs/">pointing definitions</a>.
+</p>
+
+<hr>
+
+<h3>Table of Contents</h3>
+<ol type="I">
+<li><a href="#dataselec">Preliminary data processing and selection</a></li>
+<li><a href="#paramfit">Parameter estimation</a></li>
+	<ol type="i">
+	<li><a href="#beam">Beam parameter</a></li>
+	<li><a href="#ms">Source and mirror parameters</a></li>
+  <li><a href="#impact">Impact of mirror and source parameters on detector centroids position</a></li>
+	</ol>
+<li><a href="#optim">Optimisation of mirror and source parameters</a></li>
+  <ol type="i">
+  <li><a href="#framework">Framework</a></li>
+  <li><a href="#results">Results</a></li>
+    <ol type "a">
+      <li> <a href="#1d">1D-fit and gridding of the $\chi^2$</a></li>
+      <li> <a href="#2d">Degeneracies</a></li>
+      <li> <a href="#3d">Results at different deck angles</a></li>
+  </ol>
+</ol>
+
+<section><h2 id=dataselec>Preliminary data processing and selection</h2>
+<p> The data set used for this work is similar to the one used in James's analysis (RPS observations made in January 2018), though with more data cuts applied.
+  The very first step is to read ARC files and demodulate tods - I use here the exact same code as James (<tt>rps_read.m</tt>). During this step, raw encoder mount coordinates
+  are converted to topocentric coordinates of the instrument boresight using the inverse pointing model (see e.g. <a href="http://bicep.rc.fas.harvard.edu/~bicep2/papers/thesi/B1/kiwon_thesis.pdf"> Kiwon's thesis </a>). <br>
+  I then select detectors based on dk angle, source and detector polarisation angles so that the detector response is maximised, i.e. the detector polarisation axis is aligned with the one of the source given the deck angle.
+  The exact alignement of detector and source axis can only be obtained for deck angles of 0 and 90 deg, however for deck angles of 45 and 135, we can select detectors not perfectly aligned with the source, but that still have
+  a high response.
+</p>
+</section>
+
+<section><h2 id=paramfit>Parameter estimation</h2>
+
+<p>There are two possible workflows here. The first possible approach is to first convert $(az,el)$ coordinates of the raster scan to $(r,\theta)$, and then fit for beam parameters - is exactly what is implemented by James in his current work.
+The second approach is to fit for beam parameters in $(az,el)$, then convert the obtained detector centroids position parameters to $(r,\theta)$ while iterating on mirror/source parameters to minimise the difference with CMB-derived detector positions.
+I think the second approach is easier to implement, in particular to loop on source/mirror parameters to minimise the difference with CMB-derived detector positions, so this is what I am describing here.
+</p>
+<h3 id=beam> Beam parameters</h3>
+<p> I fit for beams parameters in the (az,el) topocentric coordinate system of the instrument boresight. Beams are modeled by 2d elliptical gaussians: <br>
+  \begin{equation}
+  B(\mathbf{p}) = A e^{-\frac{1}{2}\left[(\mathbf{p} - \mathbf{p}_0)^t \Sigma^{-1} (\mathbf{p} - \mathbf{p}_0)\right]}
+  \end{equation}
+  with $\mathbf{p} = (az,el)$ the time series coordinates of the instrument boresight, $\mathbf{p}_0 = (az_0,el_0)$ the position of the beam center
+  and $\Sigma$ the beam covariance matrix:
+  \begin{equation}
+  \Sigma = \begin{bmatrix} \sigma_{az}^2& \rho \sigma_{az} \sigma_{el} \\ \rho \sigma_{az} \sigma_{el} & \sigma_{el}^2 \end{bmatrix}
+  \end{equation}
+  The parameters that we fit for are thus $az_0, el_0, \sigma_{az}, \sigma_{el}, \rho$ and $A$.
+</p>
+
+<figure>
+    <table>
+        <tr>
+            <td><img src="figs/channel_2385.png"/></td>
+        </tr>
+        <tr>
+            <td><img src="figs/res_channel_2385.png"/></td>
+        </tr>
+    </table>
+    <figcaption>
+        <b>Top:</b> Typical raster scan (blue), gaussian fit (red) and residuals (green). <b>Bottom:</b> Zoom on residuals.
+    </figcaption>
+</figure>
+<h3 id=ms> Source and mirror parameters</h3>
+  <p> Once we have reconstructed beam parameters in the topocentric coordinate system of the telescope boresight, we can convert this parameters
+  to the focal plane coordinate system $(r, \theta)$ using the beam map pointing model (<tt>keck_beam_map_pointing.m</tt>). To do this we need information about the mirror and the source parameters.
+  The parameters that we will consider here (to start with - see below):
+  <ul>
+    <li> mirror roll $r$; </li>
+    <li> mirror tilt $t$; </li>
+    <li> source azimuth $s_{az}$; </li>
+    <li> source height $s_h$. </li>
+  </ul>
+  Using Moon-derived source and mirror parameters (from 2017) to convert $(az,el) \rightarrow (r,\theta)$ detector centroid positions (for dk = 0 only),
+  we obtain the focal-plane pattern in red in Figure 2.2, compared to the CMB-derived detector positions in blue. NB: the plot is acutally in (x,y) coordinates:
+  \begin{align}
+  x & = 2 \sin(r/2) \cos(\theta) \\
+  y & = 2 \sin(r/2) \sin(\theta)
+  \end{align}
+</p>
+<figure>
+  <img src="figs/focal_plane_xy_none.png"/>
+  <figcaption>
+        Detector positions from CMB observations and RPS observations.
+    </figcaption>
+</figure>
+
+<h3 id=impact>Impact of mirror and source parameters on detector centroids position</h3>
+<p>This pager presents the impact of a variation of the four previously mentioned source and mirror parameters
+  on the reconstructed detector position in the focal plane coordinate system $(x,y)$. </p>
+
+  <figure>
+  <img alt="" id="tp" src="#" onerror="this.src='plot_blank.png';" width=120% />
+         <script type="text/javascript">
+  			    var pager = new Pager("tp");
+  			    pager.link("#tp",{'Varying parameter|param': ['None|none','Source azimuth|source_az','Source height|source_h','Mirror roll|mirror_roll','Mirror tilt|mirror_tilt']},
+                              function(params)
+                              {return 'figs/focal_plane_xy_'+params.param+'.png';});
+            pager.setparams({'param': 'none'});
+            pager.gridalign('#tp', 4);
+          </script>
+  <figcaption>
+    Detector centroid positions given various mirror and source parameters
+  </figcaption>
+  </figure>
+</section>
+
+<section><h2 id=optim>Optimisation of mirror and source parameters</h2>
+<h3 id=framework> Framework </h3>
+<p>
+  The general idea is to derive a $\chi^2$ to optimise mirror parameters by minimising the difference in detector centroid positions
+  between CMB-derived positions (="true" positions) and source-derived positions, that depend on mirror (and source) parameters.
+  According to James's uncertainty analysis (see <a href="https://drive.google.com/file/d/1gENnPU4MOMHUUR0Obk87jwCdb37JmVUb/view?usp=sharing">pp. 47-48</a>),
+  the most important - if not the only - source of uncertainty on final detector polarisation angles is the systematic uncertainty on the mirror roll, $r$.
+
+  \begin{equation}
+  \chi^2(r) = \sum_{i = 1}^{n_{det}} \left[(x_{RPS}(r) - x_{CMB})^2 + (y_{RPS}(r) - y_{CMB})_i^2 \right] w_i
+  \end{equation}
+
+  with $w_i = \frac{1}{\sigma_i^2}$  - not sure yet how to define the noise variance $\sigma_i$ in this context
+  $\rightarrow$ we can start by using the variance on beam centroids residuals. We also need to pay attention to relative uncertainties on RPS- and CMB-derived parameters,
+  as we may need to add them in quadrature if they are both significant. <br>
+
+</p>
+
+<h3 id=results> Results </h3>
+
+<h4> Note on detector positions</h4>
+
+<p>
+For some of the detectors, we have several position measurements, depending on their
+position on the focal plane and the RPS scan. For these detectors, I combine the
+measurements by taking their weighted average, with the weights being the inverse of the
+variance on beam centroids residuals:
+
+\begin{equation}
+w_{i} = \frac{1}{\sigma_{i}^2},
+\end{equation}
+
+and the uncertainty on the weighted average is taken as
+\begin{equation}
+\sigma_{average} = \sqrt{\frac{1}{\Sigma_{i}\sigma_{i}^{-2}}}.
+\end{equation}
+
+The uncertainty of the weighted average $\sigma_{average}$ is the uncertainty
+that goes into the $\chi^2$ computation, Eq. (5).
+
+</p>
+
+<h4 id=1d> 1D-fit and gridding of the $\chi^2$ </h4>
+<p> I start by minimising Eq. (5) with respect to the 4 parameters previously mentioned. I choose the weights $w_i$ as the inverse
+  of the variance of the residuals obtained when fitting for detector centroids position. I do not consider a measurement uncertainty
+  associated with CMB-derived measurement at this step. For each parameter, the following figure shows the reconstructed focal plane with
+  the optimised parameter, the associated quiver plot, as well as the shape of the $\chi^2$ function. All these plots are made for a deck
+  angle of 0.
+</p>
+
+<figure>
+<img alt="" id="opt" src="#opt" onerror="this.src='plot_blank.png';" width=120% />
+       <script type="text/javascript">
+          var optpager = new Pager("opt");
+          optpager.link("#opt",
+          {'Varying parameter|param': ['Mirror tilt|tilt','Mirror roll|roll','Source azimuth|az','Source height|h'],
+            'Plot type|plot': ['Detector positions|positions','Residuals|residuals','Chi2|chi2']},
+          function(params)
+          {return 'figs/'+params.plot+'_0_v2ter_'+params.param+'.png';});
+          optpager.setparams({'param': 'tilt',
+                              'plot': 'positions'});
+          optpager.gridalign('#opt', 4);
+        </script>
+<figcaption>
+  Result of chi2 minimisation, one parameter at a time.
+</figcaption>
+</figure>
+
+<div style="text-align: center;">
+  <table>
+   <tr>
+     <th>Fitted parameter</th>
+     <th>Mirror tilt (deg)</th>
+     <th>Mirror roll (deg)</th>
+     <th>Source azimuth (deg)</th>
+     <th>Source height (m)</th>
+     <th> None </th>
+   </tr>
+   <tr>
+     <td>Best-fit value</td>
+     <td>44.6872</td>
+     <td>0.1428</td>
+     <td>-177.6564</td>
+     <td>7.8556</td>
+     <td>N/A</td>
+   </tr>
+   <tr>
+     <td>Default value</td>
+     <td>44.6870</td>
+     <td>0.1480</td>
+     <td>-177.6500</td>
+     <td>7.8964</td>
+     <td>N/A</td>
+   </tr>
+   <tr>
+     <td>$\chi^2$</td>
+     <td>8.9259</td>
+     <td>8.7581</td>
+     <td>8.8058</td>
+     <td>8.9263</td>
+     <td>8.9264</td>
+   </tr>
+  </table>
+</div>
+
+<h4 id=2d> Degeneracies </h4>
+As shown in the figure below - and as expected - the source height is degenerate with the mirror tilt, and the source azimuth
+is degenerate with the mirror roll. It is therefore not possible to fit for these parameters simultaneously.
+Again only deck angle = 0 is considered here.
+
+<figure>
+<img alt="" id="optmd" src="#optmd" onerror="this.src='plot_blank.png';" width=120% />
+       <script type="text/javascript">
+          var optmdpager = new Pager("optmd");
+          optmdpager.link("#optmd",
+          {'Varying parameter|param': ['Source azimuth and mirror roll|roll_az','Source height and mirror tilt|tilt_h'],
+            'Plot type|plot': ['Detector positions|positions','Residuals|residuals','Chi2|chi2']},
+          function(params)
+          {return 'figs/'+params.plot+'_0_v2ter_'+params.param+'.png';});
+          optmdpager.setparams({'param': 'roll_az',
+                              'plot': 'positions'});
+          optmdpager.gridalign('#optmd', 4);
+        </script>
+<figcaption>
+  Results of 2D fit
+</figcaption>
+</figure>
+
+<div style="text-align: center;">
+  <table>
+   <tr>
+     <th>Fitted parameters</th>
+     <th>Mirror roll <br> Source azimuth</th>
+     <th>Mirror tilt <br> Source height</th>
+   </tr>
+   <tr>
+     <td>Best-fit values</td>
+     <td>roll = 0.1151 deg<br> az = -177.6092 deg</td>
+     <td>tilt = 46.3589 deg<br> h = 19.2624 m</td>
+   </tr>
+   <tr>
+     <td>$\chi^2$</td>
+     <td>8.6305</td>
+     <td>6.1627</td>
+   </tr>
+  </table>
+</div>
+
+<h4 id=3d>Results at different deck angles</h4>
+<p> For this analysis, we have measurements at 4 different deck angles: 0, 45, 90 and 135 deg. All data sets were taken in January 2018,
+and the data selection, data reduction and parameter fitting pipelines (as described in this posting) are the same for all data sets.
+
+<br><br>
+
+I first analyse each deck angle separately, then I combine all 4 data sets in
+one single set of detector positions on which the mirror and source parameter
+estimation is done. Similarly to the case where we have several measurements for one detector
+at a given deck angle, positions at different deck angles are combined through a weighted average, with the
+weight for a position at a given deck angle taken as
+
+\begin{equation}
+w_{dk} = \frac{1}{\sigma_{dk}^2},
+\end{equation}
+
+and the uncertainty on the weighted average
+\begin{equation}
+\sigma_{all \, dk} = \sqrt{\frac{1}{\Sigma_{dk}\sigma_{dk}^{-2}}}.
+\end{equation}
+
+The uncertainty of the weighted average $\sigma_{all \, dk}$ is the uncertainty
+that goes into the $\chi^2$ computation, Eq. (5).
+
+</p>
+
+As mirror tilt and source height are degenerate and fitting the two simultaneously
+leads to non-physical value for the source height, I fit for only three parameters
+at the same time: either mirror parameters + source azimuth (source height fixed).
+or source parameters + mirror roll (mirror tilt fixed).
+
+<h5> Fitting mirror parameters + source azimuth </h5>
+
+<div style="text-align: center;">
+  <table>
+   <tr>
+     <th>Deck angle</th>
+     <th>0</th>
+     <th>45</th>
+     <th>90</th>
+     <th>135</th>
+     <th>All</th>
+     <th> Default <br> (no fit) </th>
+   </tr>
+   <tr>
+     <td>Mirror tilt (deg)</td>
+     <td>44.6876</td>
+     <td>44.6951</td>
+     <td>44.6971</td>
+     <td>44.6937</td>
+     <td>44.6949</td>
+     <td>44.6870</td>
+   </tr>
+   <tr>
+     <td>Mirror roll (deg)</td>
+     <td>0.1149</td>
+     <td>0.0965</td>
+     <td>0.1198</td>
+     <td>0.1208</td>
+     <td>0.1125</td>
+     <td>0.1480</td>
+   </tr>
+   <tr>
+     <td>Source azimuth (deg)</td>
+     <td>-177.6071</td>
+     <td>-177.5812</td>
+     <td>-177.6122</td>
+     <td>-177.6115</td>
+     <td>-177.5996</td>
+     <td>-177.6500</td>
+   </tr>
+   <!-- <tr>
+     <td>$\chi^2$</td>
+     <td>8.6302</td>
+     <td>2.9544</td>
+     <td>3.0791</td>
+     <td>5.5679</td>
+     <td>10.0119</td>
+     <td>n/a</td>
+   </tr> -->
+  </table>
+</div>
+
+<figure>
+<img alt="" id="mirrordk" src="#mirrordk" onerror="this.src='plot_blank.png';" width=120% />
+       <script type="text/javascript">
+          var mirrordkpager = new Pager("mirrordk");
+          mirrordkpager.link("#mirrordk",
+          {'Deck angle|dk': ['0|0','45|45','90|90','135|135','All|all_dk'],
+            'Plot type|plot': ['Detector positions|positions','Residuals|residuals','Residuals x10|residuals_10times',
+                               'Scatter histogram of residuals|scatter_hist_mod']},
+          function(params)
+          {return 'figs/'+params.plot+'_'+params.dk+'_v2ter_roll_tilt_az.png';});
+          mirrordkpager.setparams({'dk': '0',
+                            'plot': 'positions'});
+          mirrordkpager.gridalign('#mirrordk', 4);
+        </script>
+<figcaption>
+Residuals and positions after fit of {mirror roll + mirror tilt + source azimuth}
+for the four different deck angles and with all data combined.
+</figcaption>
+</figure>
+
+<h5> Fitting source parameters + mirror roll </h5>
+
+
+<div style="text-align: center;">
+  <table>
+   <tr>
+     <th>Deck angle</th>
+     <th>0</th>
+     <th>45</th>
+     <th>90</th>
+     <th>135</th>
+     <th>All</th>
+     <th> Default <br> (no fit) </th>
+   </tr>
+   <tr>
+     <td>Mirror roll (deg)</td>
+     <td>0.1150</td>
+     <td>0.0965</td>
+     <td>0.1198</td>
+     <td>0.1208</td>
+     <td>0.1125</td>
+     <td>0.1480</td>
+   </tr>
+   <tr>
+     <td>Source azimuth (deg)</td>
+     <td>-177.6071</td>
+     <td>-177.5812</td>
+     <td>-177.6121</td>
+     <td>-177.6115</td>
+     <td>-177.5997</td>
+     <td>-177.6500</td>
+   </tr>
+   <tr>
+     <td>Source height (m)</td>
+     <td>7.8930</td>
+     <td>7.8415</td>
+     <td>7.8277</td>
+     <td>7.8516</td>
+     <td>7.8435</td>
+     <td>7.8964</td>
+   </tr>
+  </table>
+</div>
+
+<figure>
+<img alt="" id="sourcedk" src="#sourcedk" onerror="this.src='plot_blank.png';" width=120% />
+       <script type="text/javascript">
+          var sourcedkpager = new Pager("sourcedk");
+          sourcedkpager.link("#sourcedk",
+          {'Deck angle|dk': ['0|0','45|45','90|90','135|135','All|all_dk'],
+            'Plot type|plot': ['Detector positions|positions','Residuals|residuals','Residuals x10|residuals_10times',
+                               'Scatter histogram of residuals|scatter_hist_mod']},
+          function(params)
+          {return 'figs/'+params.plot+'_'+params.dk+'_v2ter_roll_az_h.png';});
+          sourcedkpager.setparams({'dk': '0',
+                            'plot': 'positions'});
+          sourcedkpager.gridalign('#sourcedk', 4);
+        </script>
+<figcaption>
+Residuals and positions after fit of {mirror roll + source azimuth + source height}
+for the four different deck angles and with all data combined.
+</figcaption>
+</figure>
+
+<hr>
+
+</body>
