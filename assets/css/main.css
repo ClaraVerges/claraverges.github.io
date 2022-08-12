@@ -2681,6 +2681,12 @@ input, select, textarea {
 			width: 50%;
 		}
 
+		.features article .outer {
+			display: inline-block;
+			vertical-align: middle;
+			width: 50%;
+		}
+
 			.features article .inner > :last-child {
 				margin-bottom: 0;
 			}
@@ -3139,7 +3145,7 @@ input, select, textarea {
 			}
 
 			.image.right {
-				margin: 0 0 1em 1.5em;
+				#margin: 0 0 1em 1.5em;
 			}
 
 			.image.main {
