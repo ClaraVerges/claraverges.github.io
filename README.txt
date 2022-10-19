@@ -12,6 +12,7 @@ Credits:
 	Images:
 		ESA/Planck
 		Anthony Turner/JPL
+		BICEP/Keck collaboration
 
 	Icons:
 		Font Awesome (fontawesome.io)
