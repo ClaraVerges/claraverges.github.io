@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+
+<!--suppress HtmlDeprecatedAttribute -->
+<head>
+    <meta charset="utf-8">
+    <title>Bias on r from polarisation angle calibration (CV)</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <!-- Load up MathJax for math notation -->
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+            TeX: { equationNumbers: { autoNumber: "AMS" } }
+        });
+    </script>
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+              tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+        });
+    </script>
+    <script type="text/javascript"
+            src="../mathjax/MathJax.js?config=TeX-AMS-MML_SVG">
+            // src="../mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+
+</head>
+
+<body>
+<!-- Add my custom pager script -->
+<script type="text/javascript" src="scripts/pager.js"></script>
+<link rel="stylesheet" type="text/css" href="scripts/pager.css">
+
+<header>
+    <h1>Bias on r from polarisation angle calibration</h1>
+
+    <time datetime="2023-06-02" class="published updated">
+        2023 Jun 2
+    </time> —
+    Clara Vergès
+</header>
+
+<hr>
+
+<!-- <p>The goal of this posting is to explain to John what Clara did in Cincinnati. </p> -->
+
+<section><h2>Context</h2>
+<p></p>
+</section>
+
+<section><h2> Sims </h2>
+  <p>
+   In both cases, map-making is done with so-called "Obs" angles which correpond to design angles.
+   
+  </p>
+  <figure>
+    <img alt="Pager" id="cobayapager" src="#" width="70%" onerror=this.src="" />
+    <figcaption>
+      BB aps & rho estimator
+    <script type="text/javascript">
+        pager.link("#cobayapager",
+            {'TOD angles|simset': ['RPS|6606','Obs|6622','Diff|diff'],
+             'Plot|plot_type': ['APS|aps','Rho estimate|rho'],
+            },
+            function(params) {
+               return 'figs/' + params.plot_type + '_' + params.simset + '.png';
+            });
+        pager.setparams({
+            'simset': '6606',
+            'plot_type': 'aps',
+        });
+    </script>
+</figure>
+</section>
+  
+
+<section><h2>Conclusion</h2>
+
+</section>
+
+<hr>
+
+<section><h2>Appendix</h2>
+
+</section>
+</body>

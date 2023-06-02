@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+
+<!--suppress HtmlDeprecatedAttribute -->
+<head>
+    <meta charset="utf-8">
+    <title>TP leakage for IPR analysis (CV)</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <!-- Load up MathJax for math notation -->
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+            TeX: { equationNumbers: { autoNumber: "AMS" } }
+        });
+    </script>
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+              tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+        });
+    </script>
+    <script type="text/javascript"
+            src="../mathjax/MathJax.js?config=TeX-AMS-MML_SVG">
+            // src="../mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+
+</head>
+
+<body>
+<!-- Add my custom pager script -->
+<script type="text/javascript" src="scripts/pager.js"></script>
+<link rel="stylesheet" type="text/css" href="scripts/pager.css">
+
+<header>
+    <h1>TP leakage systematics in isotropic polarisation rotation analysis</h1>
+
+    <time datetime="2023-04-10" class="published updated">
+        2023 Apr 28
+    </time> —
+    Clara Vergès
+</header>
+
+<hr>
+
+<!-- <p>The goal of this posting is to explain to John what Clara did in Cincinnati. </p> -->
+
+<section><h2>Context</h2>
+IPR analysis and motivation to use beam sims for systematic analysis <br>
+What are beam sims and how we usaully use them in the mainline CMB analysis
+</section>
+
+<section><h2>Beam sim overview</h2>
+  <p>
+    In the context of the mainline CMB analysis focused on producing constraints on $r$, 
+    we only use the BB spectrum of beam sim. 
+    The pager below show other spectra - the spectrum we're most interested in in the context of 
+    the isotropic polarisation rotation analysis in EB. 
+    I'm plotting beam sim x real to be compared to the beam sim auto spectrum, as well as to
+    beam sim x type 8, for which there is one beam sim realisation 
+    crossed with 499 type 8 realisations. All plots shown here are from the B18 
+    beam sims (same one as we used for BK18).
+   
+  </p>
+  <figure>
+    <img alt="Pager" id="cobayapager" src="#" width="70%" onerror=this.src="" />
+    <figcaption>
+       B18 beam sims
+    <script type="text/javascript">
+        pager.link("#cobayapager",
+            {'APS|aps': ['TT|TT','EE|EE','BB|BB','EB|EB','TE|TE','TB|TB'],
+             'Signal sim type|sim_type': ['2 (LCDM only)|2','8 (Lensed LCDM + noise + dust)|8'],
+            },
+            function(params) {
+               return 'figs/bmsimxtype' + params.sim_type + '_' + params.aps + '.png';
+            });
+        pager.setparams({
+            'aps': 'BB',
+            'sim_type':'8'
+        });
+    </script>
+</figure>
+</section>
+  
+
+<section><h2>Conclusion</h2>
+
+</section>
+
+<hr>
+
+<section><h2>Appendix</h2>
+
+</section>
+</body>
