@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+
+<!--suppress HtmlDeprecatedAttribute -->
+<head>
+    <meta charset="utf-8">
+    <title>SAT systematics II (CV)</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <!-- Load up MathJax for math notation -->
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+            TeX: { equationNumbers: { autoNumber: "AMS" } }
+        });
+    </script>
+    <script type="text/x-mathjax-config">
+        MathJax.Hub.Config({
+              tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+        });
+    </script>
+    <script type="text/javascript"
+            src="../mathjax/MathJax.js?config=TeX-AMS-MML_SVG">
+            // src="../mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+
+</head>
+
+<body>
+<!-- Add my custom pager script -->
+<script type="text/javascript" src="scripts/pager.js"></script>
+<link rel="stylesheet" type="text/css" href="scripts/pager.css">
+
+<header>
+    <h1>SAT systematics project update</h1>
+
+    <time datetime="2023-04-10" class="published updated">
+        2024 Jan 19
+    </time> —
+    Clara Vergès
+</header>
+
+<hr>
+
+<!-- <p>The goal of this posting is to explain to John what Clara did in Cincinnati. </p> -->
+
+<section><h2>Context</h2>
+  <p> This posting reports progress on the CMB-S4 project
+    <a href= SAT_Systematics_Paper_Proposal-3.pdf >Framework for instrumental systematics forecasting for SATs</a>.
+   Motivation and background for the project can be found in 
+   <a href = http://bicep.rc.fas.harvard.edu/CMB-S4/analysis_logbook/20230421_sat_systematics_1/>SAT systematics project I (CV, KSK, CAB)</a>,
+  and in this <a href= 20231215_SAT_syst_project.pdf> presentation at the SAT working group </a></p>
+    <p>
+     The baseline sims that we use for this project are DC08 sims, analysed using the BK likelihood 
+     (parametric HL likelihood). We had initially envisionned to use the likelihood framework 
+     provided by the cobaya package, however due to a number of technical difficulties, we 
+     will be using the matlab implementation of the BK likelihood, used in the standard 
+     analysis of DC08 sims as in e.g.
+     <a href = http://bicep.rc.fas.harvard.edu/CMB-S4/analysis_logbook/20230602_dc08b_MLsearch/>
+     ML searches with LT on 08b sims (CLP) </a>. <br>
+     In this posting, I first reproduce the results from Clem's posting (to validate that I have the correct
+     input parameters for the likelihood code etc.), and then I start adding some additive contamination 
+     on top of the regular DC08 bandpowers to get a bias on $r$.  
+    </p>
+
+
+<section><h2> Framework validation</h2>
+
+<p>
+  Summary of cases:
+  <ul>
+    <li>  <b>baseline</b> is identical to Clem's posting with the low bin edge set to 20.</li>
+    <li> <b>r = 0.0001 </b>  BB power corresponding to exactly $r=1 \times 10^{-4}$. This is to verify that I got the technical details (such as BPWF, suppression
+    factors, signs, etc.) correctly figured out before adding less "obvious" templates</li>
+    <li><b>Uncorrelated white noise</b> at the level of 3.3% of survey noise</li>
+    <li><b>Uncorrelated ${1/\ell}$ noise</b> at the level of 6.8% 
+      of survey noise at $\ell = 72$ (center of the second bin)</li>
+  </ul>
+
+  For each case I show the histograms of the best fit values (click <b>Best fit</b>) as well
+  as the difference realisation-by-realisation: $\Delta = \textrm{param}_{template} - \textrm{param}_{baseline}$
+  (click <b>Delta</b>). For these plots, the red line is the mean bias ($\mu(\Delta)$), and the black line shows 
+  the case $\Delta = 0$ (no bias.)
+</p>
+    <figure>
+        <img alt="Pager" id="pager1" src="#" width="100%" onerror=this.src="" />
+        <figcaption>
+           
+        <script type="text/javascript">
+            pager.link("#pager1",
+                {'Input r value|r': ['0|_r0','0.003|_r0p003'],
+                 'Sky model|skymod': ['08b.00|00','08b.07|07'],
+                 'Additive contamination|template': ['None (baseline)|baseline','r = 0.0001|r_0p0001','Uncorrelated white noise|uncorr_white','Uncorrelated 1/ell noise|uncorr_1ell','B3-level TP leakage|tpleakage', 'Half B3-level TP leakage|tpleakage_half'],
+                 'Plot|plot': ['Best fit|','Delta|_delta','Template|template']
+                },
+                function(params) {
+                  if (params.plot == 'template')
+                    return 'figs/'+ params.template + '.png';
+                  else
+                    return 'figs/'+ params.template + params.skymod + params.plot + params.r+'.png';
+                }
+              );
+            pager.setparams({
+                'r': '_r0',
+                'skymod':'00',
+                'template': 'baseline',
+                 'plot':'',
+
+            });
+        </script>
+    </figure>
+
+    <center>
+
+    <style type="text/css">
+      .tg  {border-collapse:collapse;border-spacing:0;}
+      .tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+        overflow:hidden;padding:10px 5px;word-break:normal;}
+      .tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+        font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+      .tg .tg-baqh{text-align:center;vertical-align:top}
+      .tg .tg-amwm{font-weight:bold;text-align:center;vertical-align:top}
+      </style>
+      <table class="tg">
+      <thead>
+        <tr>
+          <th class="tg-baqh"></th>
+          <th class="tg-amwm" colspan="2">Sky model 08b.00</th>
+          <th class="tg-amwm" colspan="2">Sky model 08b.07</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="tg-amwm">Template</td>
+          <td class="tg-amwm">r = 0</td>
+          <td class="tg-amwm">r = 0.003</td>
+          <td class="tg-amwm">r = 0</td>
+          <td class="tg-amwm">r = 0.003</td>
+        </tr>
+        <tr>
+          <td class="tg-amwm">r = 1.000</td>
+          <td class="tg-baqh">$1.005  \pm 0.052$</td>
+          <td class="tg-baqh">$1.009  \pm 0.046$</td>
+          <td class="tg-baqh">$1.003  \pm 0.055$</td>
+          <td class="tg-baqh">$1.006  \pm 0.047$</td>
+        </tr>
+        <tr>
+          <td class="tg-amwm">Uncorrelated white</td>
+          <td class="tg-baqh">$-0.361 \pm 0.115$</td>
+          <td class="tg-baqh">$-0.673 \pm 0.163$</td>
+          <td class="tg-baqh">$-0.416 \pm 0.131$</td>
+          <td class="tg-baqh">$-0.747 \pm 0.180$</td>
+        </tr>
+        <tr>
+          <td class="tg-amwm">Uncorrelated 1/$ell$</td>
+          <td class="tg-baqh">$0.276 \pm 0.186$</td>
+          <td class="tg-baqh">$-0.239 \pm 0.243$</td>
+          <td class="tg-baqh">$0.190 \pm 0.215$</td>
+          <td class="tg-baqh">$-0.361 \pm 0.272$</td>
+        </tr>
+        <tr>
+          <td class="tg-amwm">B3-level TP leakage</td>
+          <td class="tg-baqh">$18.3 \pm 1.63$</td>
+          <td class="tg-baqh">$17.6 \pm 1.92$</td>
+          <td class="tg-baqh">$18.2 \pm 1.82$</td>
+          <td class="tg-baqh">$17.7 \pm 2.23$</td>
+        </tr>
+        <tr>
+          <td class="tg-amwm">Half B3-level TP leakage</td>
+          <td class="tg-baqh">$8.85 \pm 0.93$</td>
+          <td class="tg-baqh">$7.66 \pm 1.03$</td>
+          <td class="tg-baqh">$8.69 \pm 1.02$</td>
+          <td class="tg-baqh">$7.46 \pm 1.24$</td>
+        </tr>
+      </tbody>
+      </table>
+
+      <caption>$\Delta(r) \pm \sigma(\Delta(r)) \times 10^{-4}$</caption>
+
+    </center>
+
+<p>
+  These results can be compared to similar results obtained on DC02/DC03 sims and presented in 
+  <a href="http://bicep.rc.fas.harvard.edu/CMB-S4/analysis_logbook/20171018_dc02_appendix/">this posting</a>.
+  In particular, table 08 at the very bottom lists bias on $r$ for various cases in the case of map-based contamination.
+  It's not possible to do an apple-to-apple comparison between these two tables due to a number of differences in 
+  sky model, likelihood code and parameters, etc. That being said, I have been able to reproduce the results 
+  on DC02/DC03, which I think is a good indication that we understand what was done previously and that we are doing things consistently 
+  in this new iteration. Injecting and correctly recovering a bias of $r = 1 \times 10^{-4}$ is 
+  also a good end-to-end check of the process. <br><br>
+  The fact that results can be quite different between DC02 and DC08 is also a good reminder that 
+  the systematics and calibration requirements that we aim to set will ultimately depend on a number of design and 
+  analysis choices, which mean that they will need to be frequently revisited as the project continues to evolve.
+</p>
+
+<hr>
+
+
+<p>
+  <b>References</b>
+    <lu>
+        <li>
+          <a href= SAT_Systematics_Paper_Proposal-1.pdf >Framework for instrumental systematics forecasting for SATs</a>
+        </li>
+        <li>
+          <a href="https://arxiv.org/abs/2008.12619"> S4 <i>r</i> forecasting paper</a>
+        </li>
+        <li> 
+          <a href=" http://bicep.rc.fas.harvard.edu/CMB-S4/analysis_logbook/20171018_dc02_appendix/">DC02/DC03 results</a>
+        </li>
+    </lu>
+</p>
+
+  </section>
+</body>
